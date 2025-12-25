@@ -24,6 +24,4 @@ The specs contained in this repository are:
     - [SYP-0003: Audit Trail Format](specs/SYP-0003-audit-trail.md) - durable, tamper-evident decision record logging
     - [SYP-0004: Policy Gate API](specs/SYP-0004-policy-gate.md) - pre-execution governance evaluation interface
     - [SYP-0005: Integrity & Verification](specs/SYP-0005-integrity-verification.md) - governance artifact protection and decision authentication
-    
-**In Progress:**
-    - SYP-0006: Causal Provenance & DAG (planned)
+    - [SYP-0006: Causal Provenance & DAG](specs/SYP-0006-causal-provenance.md) - dependency tracking, replay ordering, and retention policies
