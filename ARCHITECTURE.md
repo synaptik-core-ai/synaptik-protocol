@@ -12,7 +12,7 @@ A system is considered Synaptik-aligned if it satisfies the following governance
 2. **Declarative Governance Rules** — Constraints are expressed independently of application logic.
 3. **Cryptographic Governance Integrity** — Governance rules cannot be silently modified or bypassed.
 4. **Tamper‑Evident Decision Records** — Governance decisions are durably auditable.
-5. **Causal Traceability (Recommended)** — State transitions preserve lineage for replay and analysis.
+5. **Causal Traceability** — State transitions preserve lineage for replay and analysis.
 
 These guarantees are normatively defined by the SYP specifications referenced throughout this document.
 
