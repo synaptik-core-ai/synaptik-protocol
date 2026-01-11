@@ -333,6 +333,43 @@ Evaluation timing or resource consumption MAY reveal information about refused p
 9. Memory system proceeds to atomic commit (SYP-0001)
 ```
 
+## Implementation Complexity (Non-Normative)
+
+Implementing policy gates with production-grade characteristics presents challenges:
+
+**Request Fingerprinting:**
+- How to compute deterministic fingerprints for requests with variable serialization?
+- What canonicalization ensures identical requests produce identical fingerprints?
+- How to handle requests with timestamps or nonces that vary across retries?
+
+**Resource Bound Enforcement:**
+- How to interrupt evaluation precisely at timeout thresholds without leaving partial state?
+- What mechanisms prevent evaluators from ignoring or bypassing resource limits?
+- How to estimate resource consumption before evaluation begins?
+
+**Decision Caching:**
+- How to cache decisions safely without allowing replay of refused operations?
+- What invalidation strategies keep caches consistent with contract updates?
+- How to balance cache hit rate with memory consumption for high-cardinality requests?
+
+**Concurrent Evaluation:**
+- How to evaluate multiple requests concurrently without interference?
+- What contention mechanisms prevent evaluation storms from starving other operations?
+- How to prioritize evaluations when request rate exceeds capacity?
+
+Naive implementations often achieve correctness but fail under load (throughput collapse, memory exhaustion, timeout storms). Production systems require careful engineering of evaluation coordination and resource management.
+
+## Verification Requirements
+
+Compliant policy gate systems MUST provide:
+
+1. **Resource Bound Tests** — Demonstrate evaluations exceeding bounds are refused, not approved
+2. **Concurrency Tests** — Demonstrate correct behavior under concurrent request load
+3. **Fingerprint Collision Analysis** — Document collision probability and demonstrate handling
+4. **Performance Characteristics** — Document evaluation latency at P50, P95, P99 under realistic load
+
+Claims of compliance should include load testing results demonstrating sustained throughput without degradation.
+
 ## Appendix B: Rationale for Resource Bounds (Non-Normative)
 
 Unbounded contract evaluation creates denial-of-service vulnerabilities:

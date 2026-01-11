@@ -199,6 +199,76 @@ Implementations MUST ensure governance rules evaluated during suspension remain 
 
 Refused proposals MUST NOT leak into operational query results, but MAY appear in operator-facing audit logs. Implementations SHOULD ensure audit trails are access-controlled separately from application data.
 
+## Implementation Complexity (Non-Normative)
+
+Naive implementations of SYP-0001 face several non-trivial challenges:
+
+**Evaluation Latency:**
+- How to achieve <100ms admission control in real-time systems?
+- What techniques prevent evaluation from blocking all other operations?
+- How to maintain responsiveness under adversarial contract load?
+
+**Concurrency & Isolation:**
+- How to evaluate hundreds of concurrent proposals without race conditions?
+- What mechanisms ensure proposals cannot observe each other's uncommitted state?
+- How to prevent priority inversion where slow evaluations block high-priority operations?
+
+**Atomic Commitment at Scale:**
+- How to commit state + decision metadata atomically across distributed components?
+- What storage mechanisms support true atomicity without sacrificing throughput?
+- How to handle partial failures in multi-component systems?
+
+**Resource Bounds:**
+- How to enforce evaluation timeouts without leaving proposals in undefined states?
+- What mechanisms prevent evaluator resource exhaustion under adversarial load?
+- How to balance fail-closed safety with operational availability?
+
+Systems claiming SYP-0001 compliance should demonstrate solutions to these problems rather than disabling features to meet performance targets. Production-grade implementations require maintaining sub-100ms P99 latency under sustained concurrent load.
+
+## Verification Requirements
+
+Compliant systems MUST provide:
+
+1. **Performance Benchmarks** — Demonstrated latency and throughput under realistic load (concurrent proposals, varying contract complexity)
+2. **Isolation Proofs** — Evidence that concurrent proposals cannot observe uncommitted state (test suites detecting race conditions)
+3. **Atomicity Testing** — Crash recovery tests demonstrating no partial commits exist after failures
+4. **Fail-Closed Verification** — Adversarial tests confirming evaluation errors result in refusals, never approvals
+
+Claims of compliance without verification artifacts should be treated skeptically. Reference implementations provide test suites; claiming implementations should match or exceed these verification standards.
+
+## Adversarial Scenarios (Non-Normative)
+
+Implementations should demonstrate resilience against:
+
+**Scenario 1: Concurrent Proposal Flood**
+- Submit several hundred proposals simultaneously across multiple threads
+- Verify: No proposals observe uncommitted state from others
+- Verify: All proposals complete evaluation (no deadlocks)
+- Verify: Committed state reflects exactly the approved proposals
+
+**Scenario 2: Evaluation Timeout Boundary**
+- Submit proposals that complete evaluation at exactly the timeout threshold
+- Verify: Borderline timeouts consistently refuse (no race-condition approvals)
+- Verify: No proposals left in undefined "partially evaluated" state
+
+**Scenario 3: Crash During Commitment**
+- Trigger system crashes at various points during atomic commitment
+- Verify: On recovery, either proposal+metadata both exist or neither exists
+- Verify: No orphaned decision records with missing state
+
+**Scenario 4: Malicious Contract Complexity**
+- Submit proposals triggering worst-case evaluation complexity
+- Verify: Evaluation completes within resource bounds or times out
+- Verify: System remains responsive to subsequent proposals
+- Verify: No resource exhaustion (memory leaks, thread pool exhaustion)
+
+**Scenario 5: Byzantine Evaluation Results**
+- Simulate evaluators returning inconsistent verdicts for identical proposals
+- Verify: System detects inconsistency and refuses proposals
+- Verify: Inconsistency is logged in audit trails
+
+Most implementations will fail Scenarios 1-2 under production load conditions. Implementations passing all five scenarios demonstrate production-grade correctness.
+
 ## Normative References
 
 - **RFC 2119** — Key words for use in RFCs to Indicate Requirement Levels

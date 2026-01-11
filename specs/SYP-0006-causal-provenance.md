@@ -421,6 +421,79 @@ DAG storage may use:
 - **Batch** — Periodically scan entire graph (detects cycles from imports or corruption)
 - **Topological ordering** — Maintain ordering incrementally (efficient detection on updates)
 
+## Implementation Complexity (Non-Normative)
+
+Implementing causal provenance at scale presents several challenges:
+
+**Graph Traversal Performance:**
+- How to compute transitive closure efficiently for graphs with millions of nodes?
+- What indexing strategies enable sub-second reachability queries?
+- How to handle deep causal chains (100+ ancestors) without stack overflow?
+
+**Cycle Detection at Scale:**
+- How to detect cycles incrementally without scanning entire graph on each insertion?
+- What algorithms prevent cycle detection from becoming a bottleneck at high write rates?
+- How to maintain cycle-free guarantees in distributed systems with concurrent writers?
+
+**Retention & Pruning:**
+- How to identify safe-to-delete nodes without computing full transitive closure?
+- What strategies prevent accidental orphaning when pruning old operations?
+- How to maintain query performance as graph grows over years?
+
+**Distributed Causality:**
+- How to merge causal graphs from multiple independent systems?
+- What conflict resolution mechanisms apply when graphs have inconsistent orderings?
+- How to detect violated causal dependencies when synchronizing distributed replicas?
+
+Naive implementations using recursive traversal or full graph scans do not scale beyond toy examples. Production systems require graph algorithms optimized for DAG-specific properties and incremental maintenance.
+
+## Verification Requirements
+
+Compliant causal provenance systems MUST provide:
+
+1. **Acyclicity Proofs** — Demonstrate cycle detection prevents all cycles, not just obvious ones
+2. **Traversal Correctness** — Test suites verifying backward/forward traversal returns complete result sets
+3. **Orphan Detection** — Demonstrate systems detect and handle operations with missing parents
+4. **Performance Under Scale** — Document traversal time for graphs with 1M+ nodes and varying topologies
+
+Claims of compliance should include graph pathology tests (deep chains, wide fan-out, complex diamonds) demonstrating correct behavior.
+
+## Adversarial Scenarios (Non-Normative)
+
+Implementations should demonstrate resilience against:
+
+**Scenario 1: Cycle Introduction via Race Condition**
+- Concurrently insert operations that would create a cycle if interleaved incorrectly
+- Verify: At least one insertion is refused, maintaining acyclicity
+- Verify: No transient cycles exist even briefly
+
+**Scenario 2: Deep Causal Chain**
+- Create a causal chain of 1000+ operations (A→B→C→...)
+- Verify: Traversal from root to leaf completes without stack overflow
+- Verify: Transitive closure query returns all ancestors/descendants
+
+**Scenario 3: Wide Fan-out/Fan-in**
+- Create operation with 10,000 causal parents or 10,000 children
+- Verify: Graph remains queryable with reasonable performance
+- Verify: Reachability queries complete in sub-linear time
+
+**Scenario 4: Pruning with Dependencies**
+- Attempt to delete operation that has causal children
+- Verify: System either refuses deletion or marks as tombstone
+- Verify: Dependent operations remain queryable
+
+**Scenario 5: Dangling Reference Attack**
+- Submit operation with parent references to non-existent IDs
+- Verify: Operation is refused at admission time
+- Verify: No orphaned operations appear in graph
+
+**Scenario 6: Graph Consistency Under Partial Failure**
+- Simulate crash during multi-operation causal chain insertion
+- Verify: On recovery, graph contains no dangling references
+- Verify: Either entire chain exists or none of it does
+
+Most implementations will fail Scenarios 3-6 under realistic scale. Systems passing all six demonstrate production-grade causal graph management.
+
 ## Versioning & Evolution
 
 ### 10.1 Backward Compatibility

@@ -126,7 +126,7 @@ To reduce overhead, systems MAY batch multiple decision entries before computing
    - Batch identifier or sequence number
    - Timestamp of seal operation
    - Count of entries in batch
-   - Integrity proof (Merkle root, signature, etc.)
+   - Integrity proof (implementation-defined cryptographic commitment)
 
 **Batch Size Tradeoffs:**
 
@@ -181,15 +181,15 @@ Audit trails MUST preserve decision ordering.
 
 **Timestamp Options:** Systems MAY use:
 - **Wall-Clock Timestamps** — Physical time (UTC), monotonic within tolerance for small clock skew
-- **Logical Clocks** — Lamport timestamps, vector clocks, or hybrid logical clocks for distributed systems
+- **Logical Clocks** — Causally-ordered timestamps for establishing happened-before relationships
 - **Batch Timestamps** — All entries in a batch share the seal timestamp (ordering within batch may be by sequence number)
 
 **Concurrency:** Systems processing concurrent decisions MAY:
 - Serialize concurrent decisions to a single trail
 - Maintain separate trails per evaluation context, with synchronization metadata
-- Use logical clocks to establish happened-before relationships
+- Use causally-ordered timestamps to establish happened-before relationships
 
-The chosen approach MUST be documented and MUST enable reconstructing causal relationships without requiring wall-clock synchronization.
+The chosen approach MUST be documented and MUST enable reconstructing causal relationships.
 
 ## Audit Trail Access
 
@@ -332,7 +332,7 @@ A system conforms to SYP-0003 if:
 
 1. Governance decisions are recorded in an append-only audit trail
 2. Audit entries contain required metadata (ID, timestamp, verdict, intent)
-3. The trail is tamper-evident via chained hashes, Merkle trees, or signatures
+3. The trail is tamper-evident via cryptographic techniques (implementation-defined)
 4. Entries are recorded in chronological order with sequential consistency
 5. The trail is durable and survives system restarts
 6. External verifiers can detect tampering without system access
@@ -416,6 +416,80 @@ Audit trails serve as evidence; they must be trustworthy:
 - **RFC 3161** — Time-Stamp Protocol (external anchoring)
 
 ---
+
+## Implementation Complexity (Non-Normative)
+
+Implementing tamper-evident audit trails at scale presents several challenges:
+
+**Write Throughput:**
+- How to append audit entries at sustained production rates without becoming a bottleneck?
+- What batching strategies balance latency with cryptographic overhead?
+- How to maintain append-only semantics under concurrent load?
+
+**Tamper-Evidence Performance:**
+- How to compute cryptographic proofs without blocking audit writes?
+- What data structures enable efficient verification of individual entries in large batches?
+- How to generate inclusion proofs for entries in multi-terabyte audit logs?
+
+**Storage & Retention:**
+- How to manage audit trail growth over years of continuous operation?
+- What archival strategies preserve tamper-evidence after moving to cold storage?
+- How to verify integrity of archived segments without rehydrating all data?
+
+**Coordination Under Concurrency:**
+- How to assign globally unique sequence numbers when multiple writers operate concurrently?
+- What mechanisms prevent conflicting batch seals when writes occur in parallel?
+- How to maintain sequential consistency when audit entries are created concurrently?
+
+Naive implementations either sacrifice performance (synchronous cryptographic operations per entry) or sacrifice integrity (buffering without crash recovery). Production systems require sophisticated techniques to achieve both.
+
+## Verification Requirements
+
+Compliant audit trail systems MUST provide:
+
+1. **Tamper Detection Tests** — Demonstrate modification of entries, deletion of entries, and reordering of entries are all detectable
+2. **Independent Verification** — Provide verification tools that work without access to the system that created the trail
+3. **Performance Benchmarks** — Document achieved write throughput, verification time, and storage efficiency
+4. **Crash Recovery Evidence** — Demonstrate no entries are lost or corrupted after crashes during writes
+
+Claims of compliance without demonstrable tamper detection and independent verification should be treated skeptically.
+
+## Adversarial Scenarios (Non-Normative)
+
+Implementations should demonstrate resilience against:
+
+**Scenario 1: Silent Entry Modification**
+- After trail creation, modify entry content directly in storage
+- Verify: Tampering is detected via integrity check failures
+- Verify: Modified entry is identified specifically
+
+**Scenario 2: Entry Deletion**
+- Delete individual entries from middle of audit trail
+- Verify: Deletion is detected via sequence gaps or broken chains
+- Verify: System can identify which entries are missing
+
+**Scenario 3: Reordering Attack**
+- Reorder entries within a batch or across batches
+- Verify: Reordering is detected via timestamp or sequence inconsistencies
+- Verify: Original order can be proven from timestamps/chains
+
+**Scenario 4: Rollback Attack**
+- Restore audit trail to earlier state, discarding recent entries
+- Verify: Rollback is detectable (missing expected entries)
+- Verify: External anchors or timestamps prove later entries existed
+
+**Scenario 5: Write Flood Denial of Service**
+- Flood audit trail at 10x sustained production rate
+- Verify: System applies backpressure without data loss
+- Verify: Audit trail remains verifiable after flood
+- Verify: No memory exhaustion or crash under sustained load
+
+**Scenario 6: Concurrent Tamper During Verification**
+- Modify entries while external verifier is computing proofs
+- Verify: Verifier detects inconsistency
+- Verify: No false-positive verification from race conditions
+
+Most implementations will fail Scenarios 4-6. Systems passing all six demonstrate cryptographically sound tamper-evidence under adversarial conditions.
 
 ## Appendix A: Example Audit Entry (Non-Normative)
 

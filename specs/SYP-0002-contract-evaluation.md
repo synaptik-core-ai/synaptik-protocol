@@ -441,6 +441,43 @@ NOT expression
 
 This allows rich constraints while maintaining decidability and resource bounds.
 
+## Implementation Complexity (Non-Normative)
+
+Implementing performant contract evaluation presents several challenges:
+
+**Evaluation Performance:**
+- How to evaluate complex contracts in <50ms for real-time admission control?
+- What techniques enable pattern matching across large proposal content efficiently?
+- How to handle worst-case complexity without timing out every evaluation?
+
+**Contract Composition:**
+- How to merge multiple contracts without exponential rule explosion?
+- What conflict resolution mechanisms prevent contradictory constraints?
+- How to maintain deterministic evaluation when contracts overlap?
+
+**Predicate Optimization:**
+- How to compile declarative predicates into efficient evaluation code?
+- What query optimization techniques apply to constraint evaluation?
+- How to avoid repeated computation for similar proposals?
+
+**Risk Score Calibration:**
+- How to ensure risk scores remain meaningful as contracts evolve?
+- What normalization techniques prevent score inflation over time?
+- How to aggregate scores from multiple contracts consistently?
+
+Naive implementations often achieve correctness OR performance, but not both. Production systems require optimization strategies that maintain deterministic semantics while achieving sub-millisecond evaluation for common cases.
+
+## Verification Requirements
+
+Compliant contract evaluation systems MUST provide:
+
+1. **Determinism Proofs** — Demonstrate identical proposals produce identical verdicts under identical contract sets
+2. **Performance Characteristics** — Document worst-case evaluation complexity with evidence
+3. **Composition Semantics** — Specify and test how multiple contracts interact (override, merge, conflict)
+4. **Security Analysis** — Demonstrate contract evaluation cannot exfiltrate data or cause side effects
+
+Claims of declarative contract evaluation should include test suites demonstrating these properties. Systems permitting arbitrary code execution (scripting) should document sandbox guarantees with escape-resistance evidence.
+
 ## Appendix D: Rationale for Declarative Contracts (Non-Normative)
 
 **Why not executable code?**
