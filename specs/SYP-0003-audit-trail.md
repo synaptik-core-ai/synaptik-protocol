@@ -78,7 +78,7 @@ Decision entries SHOULD additionally include:
 
 - **Actor** — Who initiated the operation (user ID, service account, etc.)
 - **Purpose** — Context for the operation (production, training, replay, etc.)
-- **Scope** — Namespace or partition (e.g., memory lobe, database schema)
+- **Scope** — Namespace or partition (e.g., database schema)
 - **Target** — Specific resource identifier (memory key, file path, etc.)
 - **Contract References** — Which contracts were evaluated (name, version, digest)
 - **Constraint Violations** — Which specific rules failed (if any)

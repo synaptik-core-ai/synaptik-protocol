@@ -74,7 +74,7 @@ Systems MAY accept freeform intent strings, but SHOULD structure them to avoid n
 **Operation Context (Optional Fields):**
 - **Actor** — Identity of the entity requesting the operation
 - **Purpose** — Machine-readable purpose tag (training, replay, production, etc.)
-- **Scope** — Logical namespace or partition (e.g., "lobe" in memory systems)
+- **Scope** — Logical namespace or partition (e.g., "medical_records", "financial", "conversations")
 - **Target** — Specific resource identifier being operated upon
 - **Causal Parents** — References to prior operations this operation depends on (see SYP-0006)
 
