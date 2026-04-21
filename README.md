@@ -2,6 +2,10 @@
 
 This protocol defines how Synaptik components communicate, prove lineage, and enforce governance. It targets implementers of Thalamus and related tools, service integrators who embed Synaptik into their own platforms, and auditors who verify invariants. The scope covers runtime behaviors and wire formats for routing, lineage, and contract enforcement; it excludes non-Synaptik application logic. Each SYP document is versioned independently (e.g., SYP-0001) and backward-compatibility expectations are stated per section so you can evaluate upgrade impacts.
 
+> If you’re reaching out about this repo, include what specifically stood out or what you’re trying to build with it.  
+> Include a link to your social (or Substack) so I know you’re a real person.  
+> Email: hello@synaptik-core.dev
+
 ## Specification Status Labels
 
 Each spec includes a status badge to indicate its maturity:
